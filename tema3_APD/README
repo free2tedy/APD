@@ -1,0 +1,17 @@
+	
+	Dimcica Tudor
+	331CC
+	Tema 3 APD
+	
+	Detalii implementare:
+	
+	Dupa ce am citit datele de intrare din fisier le-am trimis catre celalalte procese prin
+broadcast. Fiecare proces dupa ce a receptionat datele isi calculeaza latimea si inaltimea imaginii.
+Fiecare proces are de prelucrat un anumit numar de linii din intreaga imagine si va lucra pe
+portiunea corespunzatoare de matrice. Parcurgerea si scrierea in matrice se face direct inversat
+pentru a respecta in mod corect axele unei imagini. Fiecare proces isi va determina liniile pe care
+le prelucreaza strict din datele de intrare pe care le-a primit, nefiind nevoie de alte mesaje de
+comunicare intre master si celalalte procese. Algoritmii au fost implementati exact ca in
+pseudocodul din enunt. Dupa terminarea algoritmului fiecare proces isi trimite portiunea de matrice
+prelucrata catre master. Acesta asteapta sa primeasca toate bucatile de matrice de la toate
+procesele si apoi scrie imaginea in fisier conform indicatiilor din enunt.

@@ -1,0 +1,2 @@
+build:	
+	mpicc distribuit.c -lm -o main
