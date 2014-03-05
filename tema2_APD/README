@@ -1,0 +1,48 @@
+	
+	Dimcica Tudor
+	331CC
+	Tema 2 APD
+	
+	Detalii implementare:
+	
+	Clasa WorkPool -- Contine doua LinkedList, una pentru taskuri de map si una pentru taskurile
+de reduce. Contine metode de get si put pentru ambele tipuri de taskuri. 
+
+	Clasele MapWork si ReduceWork -- Sunt clasele folosite pentru a reprezenta taskurile de map
+si reduce. MapWork contine un string cu un fragment de text si un string cu numele fisierului
+din care face parte. MapReduce contine un Hashtable cu cuvintele gasite intr-un fragment de
+text si un string cu numele fisierului din care face parte.
+
+	Clasa Worker -- Extinde clasa Thread. Prin constructor se da WorkPoolul pe care lucreaza
+si tipul de taskuri pe care il va prelucra, 0 pentru map si 1 pentru reduce. Metoda
+createHashTable transform un string in tokeni(folosind sirul de delimitatori " _().,;:-\"\n\r\t\f")
+si le pune pe acestea intr-un hashtable. De asemenea in acelasi timp se numara cuvintele din fiecare 
+fisier prelucrat. Numararea se face intr-un bloc syncronized pentru ca un singur thread sa poata 
+modifica numarul de cuvinte la un moment dat. Metoda run(cea responsabila pentru prelucrarea 
+paralela) a fost suprascrisa si in interiorul ei se fac prelucrarile in funtie de tipul de task. 
+Operatia de map: se verifica daca mai exista taskuri de MapWork si daca da se scoate unul si se 
+prelucreaza cu metoda createHashTable. Se obtine astfel un hashtable pe baza caruia se updateaza 
+hashtableul global asociat fisierului din care face parte fragmentul de text din task. Operatia de 
+reduce: Se verifica daca exista taskuri de reduce si daca da se scoate unul si se calculeaza factorul 
+de similititudine cu formula data in enunt. Toate operatiile de get si put in hashtableul global au 
+fost facut in blocuri syncronized.
+
+	Clasa MapReduce -- Clasa care contine mainul si metodele de parsare ale fisierelor de intare.
+Metoda readInput citeste fisierul dat ca al doilea argument la rulare. Metoda readDoc citeste
+dintr-un fisier cate D octeti pana la epuizarea tuturor octetilor din fisier. Cei D octeti sunt
+impachetati alaturi de numele fisierului de care apartin intr-o instanta a clasei MapWork si sunt
+adaugate la WorkPool. Metoda readAll citeste toate fisierele necesare pentru comparare. Metoda main 
+primeste ca argumente numarul de threaduri, fisierul de input si fisierul de output. Variabilele 
+parsate din fisierul de input sunt salvate in atributele clasei MapReduce. In main dupa citirea
+tuturor fisierelor(si implicit umplerea workpoolului cu taskuri) se dau drumul la NT workeri care fac
+operatiunea de map. Dupa operatiunea de map se obtin hashtableul fiecarui fisier cu numarul de 
+aparitii al cuvintelor. Mai departe se pune cate un hashtable in lista de taskuri pentru operatia
+de reduce. Se da drumul la NT workeri care fac operatia de reduce. Dupa operatia de reduce vom avea
+in hashtableul similarityFactor perechile (fisier, procentSimilaritate). Aceste perechi se ordoneaza
+dupa transformarea intr-o lista si se afiseaza in fisierul de output conform sablonului dorit.
+
+	Reguli Makefile:
+	
+	build: compileaza toate sursele .java
+	clean: sterge toate fisierele .class	
+	Clasa ce contine metoda main se numeste MapReduce.
