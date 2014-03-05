@@ -1,0 +1,134 @@
+	
+	Dimcica Tudor
+	331CC
+	Tema 4 APD
+	
+	Detalii implementare:
+	
+	La initializare fiecare proces isi citeste lista de adiacenta aferenta
+nodului sau din topologie. Astfel el isi va updata topologia(goala la inceput)
+cu linia si coloana pe care sunt vecinii sai. Pentru a descoperi topologia am
+realizat algoritmul bazat pe mesaje de sondaj cu ecou ca cel descris in 
+laborator. Algoritmul este initiat de procesul 0. Acesta trimite mesaje de 
+sondaj catre toti vecinii sai. Apoi intra intr-o bucla infinitia, ca si
+celalalte procese, din care iese in anumite conditii. Orice proces in momentul
+in care primeste un sondaj, isi va actualiza parintele in cazul in care acesta
+era necunoscut (dat cu valoarea -1 in implementare) sau, va da drop la mesaj 
+in cazul in care isi stie parintele, isi salveaza intr-o matrice muchia formata
+de acesta cu nodul de la care a primit (pentru ca aceasta formeaza un ciclu) si
+scade counterul de mesaje (acest counter este incrementat intr-un proces 
+oarecare de fiecare data cand acesta trimite un sondaj). Mesajele sondaj au 
+recv_type = 1. Fiecare proces poate sa trimita mesaje de tip ecou cu topologia 
+proprie atunci cand countul de mesaje este pe 0 si isi cunoaste parintele (asta 
+inseamna ca pentru fiecare sondaj trimis a primit un mesaj inapoi). Dupa ce a 
+trimis mesaj de tip ecou, procesul iese din bucla de primire a mesajelor. 
+Prelucrarea mesajelor de tip ecou presupune operatia de sau logic intre 
+topologia primita si topologia interna a procesului. In momentul primirii unui 
+ecou countul de mesaje se decrementeaza. Procesul initiator al algorimului (0 
+in cazul de fata) nu va avea parinte si va avea ca si conditie de iesire din
+bucla doar ca countul de mesaje sa fie 0 (a primit ecou de la toti vecinii sai).
+In acest moment procesul 0 are topologia completa si o trimite mai departe la
+vecinii sai. Orice alt proces care primeste topologia va trimite la toti vecinii
+cu exceptia celui de la care a primit-o. Ciclurile sunt eliminate prin evitarea
+trimiterii pe muchiile salvate in cea de a doua matrice in care am precizat ca 
+am salvat muchiile ce formeaza cicluri.
+	Pe baza topologiei am calculat tabela de rutare in fiecare proces folosind
+algoritmul Floyd-Warshall.
+	Conform enuntului am afisat tabela de rutare a fiecarui proces. Am ales sa
+afisez vectorul next_hop ce reprezinta tabela de rutare pe o linie pentru
+fiecare buncar. Ordinea nodurilor este crescatoare. Prima valoare reprezinta
+next hopul catre buncarul 0, a doua valoare reprezinta next hopul catre buncarul
+1, si asa mai departe.
+	De asemenea conform enuntului am afisat matricea de adiacenta a procesului 0.
+	Apoi am trecut la citirea din fisier a mesajelor ce vor fi trimise intre
+buncare, pe care le-am salvat intr-o structura cu nod sursa, nod destinatie si
+mesaj.
+	Pentru a semnala ca se poate incepe comunicatia, fiecare buncar trimite un
+mesaj de broadcast. In momentul in care la un proces ajunge un astfel de mesaj 
+de broadcast emis de alt buncar va fi afisat la stdin un mesaj in urmatorul
+format:
+	[B%c] Etapa 1 finalizata -Buncar %e- (sursa B%s) --> unde %c este rankul 
+buncarului care a primit mesajul broadcast, %e este rankul buncarului care a
+emis initial broadcastul iar %s este rankul buncarului care a trimis mesajul
+catre buncarul %c.
+	Fiecare proces va astepta size - 1 mesaje de broadcast inainte de a trece
+mai departe (adica cate un mesaj de broadast emis de catre toate celalalte 
+buncare).
+	Se trece la trimiterea mesajelor. Fiecare proces verifica in structura de
+mesaje daca are de trimis vreun mesaj. Procesele care trimit mesaje, vor trimite
+mesajul sub urmatorul format: "nd ns msg" --> unde nd este nodul destinatie
+finala, ns este nodul curent si msg este mesajul propriu-zis. La momentul
+trimiterii unui mesaj se va afisa la stdin un mesaj sugestiv cu id-ul buncarului
+care trimite, mesajul, destinatia finala si next hopul.
+	Dupa finalizarea etapei de trimitere a mesajelor se mai trimite un mesaj de
+broadcast identic cu cel precedent pentru a semnala faptul ca trimiterea 
+mesajelor s-a incheiat pentru fiecare proces ajuns la stadiul acesta. Rolul
+acestui broadcast este de a incheia la un moment dat procesul de rutare.
+	In acest moment am ajuns la rutarea mesajelor. Fiecare proces va intra
+intr-o bucla in care va astepta sa primeasca mesaje. Iesirea din aceasta bucla
+pentru fiecare proces in parte se va face in momentul in care acesta va primi
+toate mesajele de broadcast mai sus mentionate emise de celalalte buncare.
+La fiecare mesaj primit buncarul care primeste mesajul va trece la parsarea lui 
+sub formatul precizat mai devreme. El va veriica in primul rand nodul 
+destinatie finala. Valoarea -1 desemneaza mesaje broadcast cu continutul 
+pecificat in fisierul de mesaje. Acesta va fi afisat de fiecare proces care il 
+va primi sub urmatoarea forma:
+	[RUTARE] [B%c] [BROADCAST] msg --> unde %c este rankul buncarului care
+afiseaza mesajul si msg este mesajul broadcastuit.
+	Valoarea -2 la nodul destinatie este specifica mesajului de broadcast 
+mentionat mai sus, ce are rol de semnal pentru terminarea trimiterii mesajelor
+din partea unui alt buncar. Nu se afiseaza nici un fel de mesaj ci doar se
+incrementeaza contorul aferent mesajelor de broadcast de acest tip primite. In
+momentul in care acest contor este egal cu numarul de buncare - 1 procesul va
+iesi din bucla de rutare.
+	Daca nodul destinatie finala coincide cu buncarul care prelucreaza mesajul
+atunci inseamna ca mesajul a ajuns la destinatie si procesul de rutare pentru
+acest mesaj s-a terminat. Se va afisa la stdin sub urmatorul format:
+	[B%c] Am primit mesajul: " %msg " de la B%s --> unde %c este rankul 
+buncarului curent, %msg este mesajul trimis si %s este ultimul nod de la care 
+a sosit mesajul.
+	Pentru orice alta valoare se ruteaza mesajul mai departe. Pe baza nodului
+destinatie finala se obtine next hopul. Nodul sursa este folosit la afisare la
+stdin a mesajului specific rutarii. La trimiterea mesajului nodul destinatie
+ramane neschimbat in mesaj, nodul sursa este updatat cu rankul buncarului care
+face rutarea si subiectul mesajului ramane acelasi. Se trimite mai departe la
+next hop si se afiseaza la stdin mesajul specific rutarii dupa urmatorul
+format:
+	[RUTARE] [B%c] Rutez mai departe mesajul primit de la B%s catre B%d prin
+next hop: B%n --> unde %c este rankul buncarului curent, %s este rankul
+ultimului buncar de la care a venit mesajul, %d este rankul buncarului
+destinatie finala si %n rankul buncarului next hop.
+	Dupa procesul de rutare a mesajelor urmeaza algorimtul de alegere a 
+liderului si a adjunctului. Primul pas al algorimtului este algoritmul de wake
+up implementat exact cum este prezentat in curs. Dupa terminarea algoritmului
+incepe efectiv procesul de alegere a liderului. Fiecare proces isi alege votul
+random. Fiecare nod va astepta sa primeasca votul de la N-1 vecini, va
+centraliza voturile si va trimite mai departe la al N-lea vecin minimul dintre
+voturile centralizate (N = numarul de vecini). Dupa trimiterea votului fiecare
+nod va astepta raspuns cu decizia de la acelasi nod caruia i-a trimis votul
+centralizat. Ultimele 2 noduri dpdv cronologic care fac schimb de voturi 
+vor avea decizia si se vor debloca. Dupa ce fiecare nod se deblocheaza va 
+trimite decizia la restul nodurilor si astfel se propaga cine a fost desemnat
+lider in toata topologia. Algoritmul de alegerea a adjunctului este identic
+singura diferenta e ca oricare dintre procese n-are voie sa voteze din nou 
+liderul. La sfarsit fiecare proces va afisa un mesaj specific cu liderul si
+adjunctul ales. Votul fiecarui proces poate fi fie random fie se poate vota pe
+sine insasi. Alegerea random a fost facuta cu scopul de a vedea ca algoritmul
+functioneaza.
+
+	Fiecare etapa este delimitata cu comentarii sugestive si explicative asupra
+codului si implementarii teoretice.
+
+	Makefileul contine reguli de build, clean si run. Numele executabilului este
+network. Regula de run ruleaza executabilul cu fisierele de intrare furnizate in
+arhiva temei.
+
+	In arhiva am inclus topologia din enunt ("lista_adiacenta.in") la care am 
+adaugat o muchie intre 5 si 6 pentru a forma un ciclu si pentru a verifica 
+corectitudinea programului. De asemenea am inclus un fisier de mesaje cu
+mesajele din enunt ("fisier_mesaje"). 
+	
+	
+	
+	
+	
