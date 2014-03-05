@@ -1,0 +1,166 @@
+	
+	Dimcica Tudor
+	331CC
+	Tema 1 APD
+	
+	Procesor: Intel Pentium Core 2 Duo T4200
+	Arhitectura: 64-bit
+	Numar Procesoare: 1
+	Numar Core-uri: 2
+	Numar Threaduri per Core: 1
+	L1 Cache: 128KB
+	L2 Cache: 1MB
+	Viteza procesor: 2GHz
+	
+	A) Detalii Implementare
+	
+1. serial_neoptimizat.c
+
+	Pentru varianta neoptimizata am ales o solutie in O(n^5). Pentru fiecare element al
+matricii(senator) (O(n^2)) calculez distantele minime fata de toate culorile politice 
+parcurgand toate elemente din matrice (O(n^2)). Din minimele obtinute fata de fiecare 
+culoare politica calculez maximul care va reprezenta noua culoare politica a senatorului
+pentru care am calculat. Valoarea se trece intr-o noua matrice pe aceiasi pozitie, se
+incrementeaza numaratoarea pentru respectiva culoare politica si se face acelasi lucru
+si pentru restul senatorilor. Acest algoritm are o complexitate de O(n^4) si pus intr-o
+bucla de numarul de saptamani dat ca argument la rulare ajunge la o complexitate de
+O(n^5).
+	Pentru 100 de saptamani si fisierul de intrare in100_20 am obtinut un timp de 1m50s
+pe calculatorul personal.
+
+2. serial_optimizat.c
+
+	Pentru varianta seriala optimizata am schimbat modul in care calculez distanta minima
+catre fiecare culoare politica disponibila. Am inlocuit buclele for imbricate care 
+parcurgeau din nou toate elementele matricii cu o bucla while care la fiecare iteratie
+face o cautare a culorilor pentru care nu s-a gasit inca minimul printre toate elementele
+matricii situate la o distanta fixa fata de elementul/senatorul pentru care se calculeaza
+culoarea. La intrare in while distanta este setata ca fiind 1 si se incrimenteaza la
+finalul fiecarei bucle. Algoritmul incepe sa caute pe "cercul" de raza egala cu distanta
+si in momentul gasirii minimului catre o noua culoare o updateaza in vectorul dmin si o 
+marcheaza ca fiind calculata in vectorul v asa cum apare acesta in cod. Numarul de culori
+pentru care trebuie calculata distanta minima este calculat inainte de intrare in while prin 
+scaderea numarului de culori politice ce nu mai exista in acea saptamana din numarul total de
+culori. Intr-o optimizare initiala am considerat ca si conditie de iesire din bucla while 
+momentul cand s-au calculat minimele catre toate culorile ramase. In a doua optimizare, cea cu 
+care am dat submit, am  considerat conditia de iesire ca fiind momentul cand s-au calculat 
+minimele pentru toate culorile - 1 la sfarsitul unei bucle. Exista doua situatii in aceasta 
+varianta: fie la sfarsitul unei bucle s-au calculat minimele catre toate culorile si pentru a 
+obtine noua culoare se face maximul dintre ele, fie s-au calculat minimele catre toate 
+culorile - 1 iar ultima culoare se afla sigur pe un "cerc" aflat la o distanta strict mai mare 
+decat restul culorilor, devenind astfel maximul dintre distantele cautate si implicit noua 
+culoare de pe pozitia calculata, in urmatoarea saptamana. Aceasta a doua optimizare a redus 
+considerabil timpul de executie al algoritmului.
+	Pentru 100 de saptamani si fisierul de intrare in100_20 am obtinut un timp de 12.8s pe 
+calculatorul personal.
+
+3. paralel_optimizat.c
+
+	Paralelizarea se face pe varianta seriala optimizata.
+	Am ales sa paralelizez bucla for aferenta liniilor in calculul culorilor. Variabilele shared
+sunt cele care sunt globale si raman nemodificate(k, n, old_senat, zero) sau cele care trebuie
+modificate la nivel global(number_sen) din fiecare thread. Pentru a putea updata corect number_sen
+(numarul de senatori din fiecare culoare intr-o saptamana) am folosit directiva #pragma omp atomic 
+care blocheaza zona de memorie accesata de urmatoarea instructiune pe un singur thread nepermitand 
+altor threaduri accesul la aceiasi zona de memorie in acelasi timp.  Variabilele private sunt cele
+folosite ca index in buclele for si restul variabilelor "locale" fiecarui calcul al noii culori.
+	Cel mai bun timp obtinut pe calculatorul personal a fost obtinut cu schedule dynamic si chunk 
+size egal cu 1: 7.5s.
+	Numarul de threaduri = 2 (specificat in enunt)
+
+
+	B) Timpi obtinuti pe calculatorul personal:
+	
+	serial_neoptimizat: 	1m50s
+	serial_optimizat:		12.8s
+	paralel_optimizat:	7.5s
+
+Speedup: serial_optimizat/paralel_optimizat = 12.8/7.5 = 1.7
+
+	C) Analiza performantelor
+	
+	Am testat pe un calculator cu urmatoarele specificatii:
+	
+	Procesor: Intel Core i5-2410M
+	Arhitectura: 64-bit
+	Numar Procesoare: 1
+	Numar Core-uri: 2
+	Numar Threaduri per Core: 2
+	Cache: 3MB
+	Viteza procesor: 2.3GHz
+	
+	Am realizat teste cu schedule static, dynamic si guided , chunksize de 50, 25, 10,
+5, 1 pe 1, 2 si 4 threaduri. Fisierul de intrare pe care s-a facut testarea este 
+in100_20 cu N = 100 si K = 20 din resursele furnizate.
+
+	serial_optimizat: 6.32s
+
+	Threads = 1;
+	
+	chunksize = 50:
+	dynamic: 7.18s		static: 7.15s		guided: 7.09s
+	chunksize = 25:
+	dynamic: 7.08s		static: 7.19s		guided: 7.08s
+	chunksize = 10:
+	dynamic: 7.09s		static: 7.09s		guided: 7.07s
+	chunksize = 5:
+	dynamic: 7.20s		static: 7.09s		guided: 7.08s
+	chunksize = 1:
+	dynamic: 7.23s		static: 7.38s		guided: 7.08s
+	
+	Paralelizare cu un singur thread este echivalenta cu algoritmul serial. Se observa ca
+timpii sunt aproximativ aceiasi pentru toate tipurile de schedule datorita faptului ca
+toate instructiunile se executa pe acelasi thread. Se observa ca rularea algoritmului
+paralelizat este putin mai lenta decat al celui serial, probabil datorita overheadului
+sincronizarilor si a cacheului pe rularea paralela. 
+	
+	Threads = 2;
+	
+	chunksize = 50:
+	dynamic: 4.86s		static: 5.02s		guided: 4.91s
+	chunksize = 25:
+	dynamic: 4.35s		static: 4.34s		guided: 6.32s
+	chunksize = 10:
+	dynamic: 3.99s		static: 4.01s		guided: 7.07s
+	chunksize = 5:
+	dynamic: 3.89s		static: 3.90s		guided: 4.83s
+	chunksize = 1:
+	dynamic: 3.80s		static: 3.84s		guided: 8.45s
+	
+	Best speedup: 1.63 -- realizat cu chunksize = 1 si schedule dynamic.
+	
+	Se observa o imbunatatire a timpilor la paralelizarea pe 2 threaduri. Timpii scad 
+odata cu scaderea chunksizeului pentru scheduleuri statice si dinamice. Practic cu cat
+chunksizeul este mai mic, threadurile isi primesc mai eficient workloadurile si le 
+executa mai fluent. Rezultatele variabile ale scheduleului guided se datoreaza alocarii
+de blocuri de iteratii de dimensiuni diferite in mod descrescator pana la valoarea
+minima indicata de chunksizeul precizat.
+
+	Threads = 4;
+	
+	chunksize = 50:
+	dynamic: 7.24s		static: 6.74s		guided: 13.38s
+	chunksize = 25:
+	dynamic: 5.51s		static: 7.46s		guided: 8.01s
+	chunksize = 10:
+	dynamic: 4.17s		static: 6.65s		guided: 7.57s
+	chunksize = 5:
+	dynamic: 5.24s		static: 4.58s		guided: 5.68s
+	chunksize = 1:
+	dynamic: 5.94s		static: 3.99s		guided: 6.52s
+
+	Best speedup: 1.56 -- realizat cu chunksize = 1 si schedule static.
+
+	Se observa ca timpii au crescut putin la paralelizarea pe 4 threaduri indiferent
+de tipul de schedule. Intuiesc ca aceasta crestere a timpilor se datoreaza faptului ca
+cele 4 threaduri sunt obtinute prin virtualizarea a cate 2 threaduri pe fiecare core, 
+o varianta mai putin rapida decat 4 threaduri hardware(de pe 4 coreuri) sau chiar si 2
+threaduri hardware de pe 2 coreuri.
+
+	D) Reguli MAKEFILE:
+
+make serial_neoptimizat -- genereaza executabilul serial pentru varianta neoptimizata
+make serial_optimizat -- genereaza executabilul serial pentru varianta neoptimizata
+make paralel_optimizat -- genereaza executabilul paralel pentru varianta paralela optimizata
+make clean: sterge toate executabilele
+
